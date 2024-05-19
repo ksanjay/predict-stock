@@ -1,0 +1,42 @@
+import yfinance as yf
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+import numpy as np
+
+def predict_stock_price(ticker, days):
+    # Get historical data for the stock
+    stock = yf.Ticker(ticker)
+    data = stock.history(period="1y")
+
+    # Prepare data for training
+    data = data[["Close"]]
+    X = np.array(range(len(data))).reshape(-1, 1)
+    y = data.values.ravel()
+
+    # Split the data into train and test sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Train the linear regression model
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+
+    # Make a prediction for the specified number of days
+    last_day = len(data)
+    future_days = np.array(range(last_day, last_day + days)).reshape(-1, 1)
+    future_prices = model.predict(future_days)
+
+    # Evaluate the model on the test set
+    test_predictions = model.predict(X_test)
+    mse = np.mean((y_test - test_predictions) ** 2)
+    print(f"Mean Squared Error: {mse:.2f}")
+
+    print(f"Predicted closing prices for {ticker} for the next {days} days:")
+    for day, price in zip(future_days, future_prices):
+        print(f"Day {day - last_day + 1}: ${price.item():.2f}")
+
+# Get stock ticker and number of days from user
+stock_ticker = input("Enter the stock ticker: ")
+num_days = int(input("Enter the number of days for prediction: "))
+
+# Call the prediction function
+predict_stock_price(stock_ticker, num_days)
